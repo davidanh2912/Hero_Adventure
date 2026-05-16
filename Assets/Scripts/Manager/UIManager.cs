@@ -39,6 +39,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject victoryPanelObj;
     [SerializeField] private GameObject gameOverPanelObj;
 
+    [Header("Screens")]
+    [SerializeField] private GameObject gameplayObj;
+    [SerializeField] private GameObject selectLevelObj;
+
     private void OnEnable()
     {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnUpdatePlayerStats, UpdatePlayerStats);
@@ -65,6 +69,9 @@ public class UIManager : MonoBehaviour
     {
         enemyInfoPanel.SetActive(false);
         damagePopupObj.SetActive(false);
+        if (pausePopupObj != null) pausePopupObj.SetActive(false);
+        if (victoryPanelObj != null) victoryPanelObj.SetActive(false);
+        if (gameOverPanelObj != null) gameOverPanelObj.SetActive(false);
     }
 
     private void UpdatePlayerStats(object param)
@@ -154,16 +161,43 @@ public class UIManager : MonoBehaviour
 
     public void ShowPausePopup()
     {
-        // Implement pause popup logic here (e.g., show a panel, display options, etc.)
+        if (pausePopupObj != null)
+        {
+            pausePopupObj.SetActive(true);
+            Time.timeScale = 0f;
+        }
+    }
+
+    public void HidePausePopup()
+    {
+        if (pausePopupObj != null)
+        {
+            pausePopupObj.SetActive(false);
+            Time.timeScale = 1f;
+        }
     }
 
     public void ShowVictory()
     {
-        // Implement victory UI logic here (e.g., show a panel, display rewards, etc.)
+        if (victoryPanelObj != null)
+        {
+            victoryPanelObj.SetActive(true);
+        }
     }
 
     public void ShowGameOver()
     {
-        // Implement game over UI logic here (e.g., show a panel, display final stats, etc.)
+        if (gameOverPanelObj != null)
+        {
+            gameOverPanelObj.SetActive(true);
+        }
+    }
+
+    public void ReturnToMenu()
+    {
+        Time.timeScale = 1f;
+        if (pausePopupObj != null) pausePopupObj.SetActive(false);
+        if (gameplayObj != null) gameplayObj.SetActive(false);
+        if (selectLevelObj != null) selectLevelObj.SetActive(true);
     }
 }
