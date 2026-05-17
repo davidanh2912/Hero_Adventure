@@ -50,7 +50,10 @@ public class BattleManager : Singleton<BattleManager>
             player = FindObjectOfType<Player>();
             if (player == null) return;
         }
+    }
 
+    private void OnEnable()
+    {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, InitLevel);
     }
 
