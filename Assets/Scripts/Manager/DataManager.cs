@@ -60,7 +60,7 @@ public class GameData
 
     #region SAVE / LOAD OPERATIONS
     [ContextMenu("Save Data")]
-    public void SaveData()
+    public void Save()
     {
         PlayerPrefs.SetInt("isFirstTimePlay", isFirstTimePlay ? 1 : 0);
         PlayerPrefs.SetInt("maxUnlockedLevel", maxUnlockedLevel);
@@ -68,5 +68,6 @@ public class GameData
         PlayerPrefs.SetFloat("volumeSFX", volumeSFX);
         PlayerPrefs.Save();
     }
+    #endregion
     #endregion
 }
