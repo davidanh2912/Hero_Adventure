@@ -12,7 +12,9 @@ public enum EventID
     OnUpdateRoundCount,
     OnShowEnemyInfo,
     OnHideEnemyInfo,
-    OnUpdateEnemyHP
+    OnUpdateEnemyHP,
+    OnLevelSelected,
+    OnLevelCompleted
 }
 
 public class MatchEventData

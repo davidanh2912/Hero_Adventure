@@ -26,6 +26,7 @@ public class DataManager : Singleton<DataManager>
 public class GameData
 {
     [SerializeField] private bool isFirstTimePlay;
+    [SerializeField] private int maxUnlockedLevel;
 
     //Audio
     [SerializeField] private float volumeMusic;
@@ -34,6 +35,7 @@ public class GameData
 
     #region GETTER/SETTER
     public bool IsFirstTimePlay { get => isFirstTimePlay; set => isFirstTimePlay = value; }
+    public int MaxUnlockedLevel { get => maxUnlockedLevel; set => maxUnlockedLevel = value; }
     public float VolumeMusic { get => volumeMusic; set => volumeMusic = value; }
     public float VolumeSFX { get => volumeSFX; set => volumeSFX = value; }
     #endregion
@@ -51,6 +53,7 @@ public class GameData
     public void Load()
     {
         isFirstTimePlay = PlayerPrefs.GetInt("isFirstTimePlay", 1) == 1 ? true : false;
+        maxUnlockedLevel = PlayerPrefs.GetInt("maxUnlockedLevel", 1);
         volumeMusic = PlayerPrefs.GetFloat("volumeMusic", defaultVolume);
         volumeSFX = PlayerPrefs.GetFloat("volumeSFX", defaultSound);
     }
@@ -58,6 +61,7 @@ public class GameData
     public void Save()
     {
         PlayerPrefs.SetInt("isFirstTimePlay", isFirstTimePlay ? 1 : 0);
+        PlayerPrefs.SetInt("maxUnlockedLevel", maxUnlockedLevel);
         PlayerPrefs.SetFloat("volumeMusic", volumeMusic);
         PlayerPrefs.SetFloat("volumeSFX", volumeSFX);
         PlayerPrefs.Save();
