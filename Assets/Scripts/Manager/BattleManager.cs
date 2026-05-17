@@ -14,6 +14,7 @@ public class BattleManager : Singleton<BattleManager>
     [Header("Level Progress")]
     [SerializeField] private int maxRounds = 3;
     private int currentRound = 0;
+    private int currentLevelID;
     [SerializeField] private BackgroundScroller bgScroller;
 
     [Header("References")]
@@ -34,11 +35,14 @@ public class BattleManager : Singleton<BattleManager>
     private void OnEnable()
     {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnGemsMatched, HandleGemsMatched);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, InitLevel);
+
     }
 
     private void OnDisable()
     {
         ObserverManager<EventID>.RemoveAddListener(EventID.OnGemsMatched, HandleGemsMatched);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnLevelSelected, InitLevel);
     }
 
     private void Start()
@@ -48,10 +52,20 @@ public class BattleManager : Singleton<BattleManager>
             player = FindObjectOfType<Player>();
             if (player == null) return;
         }
+    }
 
-        player.InitStat();
-        currentRound = 0;
-        StartCoroutine(ExploreRoutine());
+    public void InitLevel(object param)
+    {
+        if (param is LevelDataSO levelData)
+        {
+            currentLevelID = levelData.LevelID;
+            maxRounds = levelData.MaxRounds;
+            listEnemySO = levelData.enemies;
+
+            player.InitStat();
+            currentRound = 0;
+            StartCoroutine(ExploreRoutine());
+        }
     }
 
     private IEnumerator ExploreRoutine()
@@ -59,7 +73,11 @@ public class BattleManager : Singleton<BattleManager>
         if (currentRound >= maxRounds)
         {
             currentState = GameState.Finished;
-            ObserverManager<EventID>.PostEvent(EventID.OnGameOver);
+            // Chiến thắng màn chơi
+            ObserverManager<EventID>.PostEvent(EventID.OnLevelCompleted, currentLevelID);
+            // Có thể cần gửi một event để báo chiến thắng thay vì OnGameOver, 
+            // hiện tại tạm dùng một custom logic hoặc update UI chiến thắng.
+            UIManager.Instance?.ShowVictory();
             yield break;
         }
 
