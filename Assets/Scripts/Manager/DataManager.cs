@@ -1,19 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class DataManager : Singleton<DataManager>
 {
     public GameData GameData { get; private set; }
 
+    private string SaveFilePath => Path.Combine(Application.persistentDataPath, "gamedata.json");
+
     protected override void Awake()
     {
         base.KeepActive(true);
         base.Awake();
-        GameData = new GameData();
-        GameData.Load();
+        LoadData();
     }
 
     private void OnApplicationQuit()
@@ -58,7 +58,9 @@ public class GameData
         volumeSFX = PlayerPrefs.GetFloat("volumeSFX", defaultSound);
     }
 
-    public void Save()
+    #region SAVE / LOAD OPERATIONS
+    [ContextMenu("Save Data")]
+    public void SaveData()
     {
         PlayerPrefs.SetInt("isFirstTimePlay", isFirstTimePlay ? 1 : 0);
         PlayerPrefs.SetInt("maxUnlockedLevel", maxUnlockedLevel);
