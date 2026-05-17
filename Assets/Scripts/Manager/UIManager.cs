@@ -10,7 +10,7 @@ public struct DamagePopupData
     public bool IsCritical;
 }
 
-public class UIManager : MonoBehaviour
+public class UIManager : Singleton<UIManager>
 {
     [Header("Player Stats UI")]
     [SerializeField] private TextMeshProUGUI hpText;
@@ -52,6 +52,7 @@ public class UIManager : MonoBehaviour
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnHideEnemyInfo, HideEnemyInfo);
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnUpdateEnemyHP, UpdateEnemyHP);
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnShowDamagePopup, HandleShowDamagePopup);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, HandleLevelSelected);
     }
 
     private void OnDisable()
@@ -63,6 +64,7 @@ public class UIManager : MonoBehaviour
         ObserverManager<EventID>.RemoveAddListener(EventID.OnHideEnemyInfo, HideEnemyInfo);
         ObserverManager<EventID>.RemoveAddListener(EventID.OnUpdateEnemyHP, UpdateEnemyHP);
         ObserverManager<EventID>.RemoveAddListener(EventID.OnShowDamagePopup, HandleShowDamagePopup);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnLevelSelected, HandleLevelSelected);
     }
 
     private void Start()
@@ -72,6 +74,16 @@ public class UIManager : MonoBehaviour
         if (pausePopupObj != null) pausePopupObj.SetActive(false);
         if (victoryPanelObj != null) victoryPanelObj.SetActive(false);
         if (gameOverPanelObj != null) gameOverPanelObj.SetActive(false);
+
+        // Đảm bảo mặc định vào scene là hiện màn hình chọn level
+        if (gameplayObj != null) gameplayObj.SetActive(false);
+        if (selectLevelObj != null) selectLevelObj.SetActive(true);
+    }
+
+    private void HandleLevelSelected(object param)
+    {
+        if (selectLevelObj != null) selectLevelObj.SetActive(false);
+        if (gameplayObj != null) gameplayObj.SetActive(true);
     }
 
     private void UpdatePlayerStats(object param)
