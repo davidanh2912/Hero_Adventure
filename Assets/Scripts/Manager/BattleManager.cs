@@ -35,6 +35,8 @@ public class BattleManager : Singleton<BattleManager>
     private void OnEnable()
     {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnGemsMatched, HandleGemsMatched);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, InitLevel);
+
     }
 
     private void OnDisable()
@@ -50,11 +52,6 @@ public class BattleManager : Singleton<BattleManager>
             player = FindObjectOfType<Player>();
             if (player == null) return;
         }
-    }
-
-    private void OnEnable()
-    {
-        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, InitLevel);
     }
 
     public void InitLevel(object param)
