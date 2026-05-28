@@ -10,7 +10,7 @@ public struct DamagePopupData
     public bool IsCritical;
 }
 
-public class UIManager : MonoBehaviour
+public class UIManager : Singleton<UIManager>
 {
     [Header("Player Stats UI")]
     [SerializeField] private TextMeshProUGUI hpText;
@@ -39,6 +39,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject victoryPanelObj;
     [SerializeField] private GameObject gameOverPanelObj;
 
+    [Header("Screens")]
+    [SerializeField] private GameObject gameplayObj;
+    [SerializeField] private GameObject selectLevelObj;
+
     private void OnEnable()
     {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnUpdatePlayerStats, UpdatePlayerStats);
@@ -48,6 +52,7 @@ public class UIManager : MonoBehaviour
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnHideEnemyInfo, HideEnemyInfo);
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnUpdateEnemyHP, UpdateEnemyHP);
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnShowDamagePopup, HandleShowDamagePopup);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, HandleLevelSelected);
     }
 
     private void OnDisable()
@@ -59,12 +64,26 @@ public class UIManager : MonoBehaviour
         ObserverManager<EventID>.RemoveAddListener(EventID.OnHideEnemyInfo, HideEnemyInfo);
         ObserverManager<EventID>.RemoveAddListener(EventID.OnUpdateEnemyHP, UpdateEnemyHP);
         ObserverManager<EventID>.RemoveAddListener(EventID.OnShowDamagePopup, HandleShowDamagePopup);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnLevelSelected, HandleLevelSelected);
     }
 
     private void Start()
     {
         enemyInfoPanel.SetActive(false);
         damagePopupObj.SetActive(false);
+        if (pausePopupObj != null) pausePopupObj.SetActive(false);
+        if (victoryPanelObj != null) victoryPanelObj.SetActive(false);
+        if (gameOverPanelObj != null) gameOverPanelObj.SetActive(false);
+
+        // Đảm bảo mặc định vào scene là hiện màn hình chọn level
+        if (gameplayObj != null) gameplayObj.SetActive(false);
+        if (selectLevelObj != null) selectLevelObj.SetActive(true);
+    }
+
+    private void HandleLevelSelected(object param)
+    {
+        if (selectLevelObj != null) selectLevelObj.SetActive(false);
+        if (gameplayObj != null) gameplayObj.SetActive(true);
     }
 
     private void UpdatePlayerStats(object param)
@@ -154,16 +173,43 @@ public class UIManager : MonoBehaviour
 
     public void ShowPausePopup()
     {
-        // Implement pause popup logic here (e.g., show a panel, display options, etc.)
+        if (pausePopupObj != null)
+        {
+            pausePopupObj.SetActive(true);
+            Time.timeScale = 0f;
+        }
+    }
+
+    public void HidePausePopup()
+    {
+        if (pausePopupObj != null)
+        {
+            pausePopupObj.SetActive(false);
+            Time.timeScale = 1f;
+        }
     }
 
     public void ShowVictory()
     {
-        // Implement victory UI logic here (e.g., show a panel, display rewards, etc.)
+        if (victoryPanelObj != null)
+        {
+            victoryPanelObj.SetActive(true);
+        }
     }
 
     public void ShowGameOver()
     {
-        // Implement game over UI logic here (e.g., show a panel, display final stats, etc.)
+        if (gameOverPanelObj != null)
+        {
+            gameOverPanelObj.SetActive(true);
+        }
+    }
+
+    public void ReturnToMenu()
+    {
+        Time.timeScale = 1f;
+        if (pausePopupObj != null) pausePopupObj.SetActive(false);
+        if (gameplayObj != null) gameplayObj.SetActive(false);
+        if (selectLevelObj != null) selectLevelObj.SetActive(true);
     }
 }
