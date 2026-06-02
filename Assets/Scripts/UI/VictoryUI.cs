@@ -365,7 +365,7 @@ public class VictoryUI : MonoBehaviour
                            GameSceneManager.Instance.TryStartLevel(nextLevelId);
             if (!success)
             {
-                GameSceneManager.Instance?.ShowMainMenu();
+                GameSceneManager.Instance?.ShowSelectLevel();
             }
         }
         else
@@ -379,6 +379,6 @@ public class VictoryUI : MonoBehaviour
         AudioManager.Instance?.PlaySoundButtonClick();
         Time.timeScale = 1f;
         Hide();
-        GameSceneManager.Instance?.ShowMainMenu();
+        GameSceneManager.Instance?.ShowSelectLevel();
     }
 }

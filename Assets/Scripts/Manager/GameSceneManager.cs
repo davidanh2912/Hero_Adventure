@@ -106,8 +106,6 @@ public class GameSceneManager : Singleton<GameSceneManager>
     {
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.SetGameMode(GameModeType.Level);
-
             if (levelConfigs != null && levelIndex >= 0 && levelIndex < levelConfigs.Length)
             {
                 GameModeManager.Instance.SetLevelConfig(levelConfigs[levelIndex]);

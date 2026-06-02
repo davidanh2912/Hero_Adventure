@@ -100,6 +100,6 @@ public class PausePopup : MonoBehaviour
         Time.timeScale = 1f;
         if (popupContentObj != null) popupContentObj.SetActive(false);
         if (backgroundDim != null) backgroundDim.gameObject.SetActive(false);
-        GameSceneManager.Instance?.ShowMainMenu();
+        GameSceneManager.Instance?.ShowSelectLevel();
     }
 }

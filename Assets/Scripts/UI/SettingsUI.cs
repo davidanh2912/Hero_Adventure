@@ -20,7 +20,6 @@ public class SettingsUI : MonoBehaviour
     {
         _musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
         _sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
-        _vibrationButton.onClick.AddListener(OnVibrationButtonClicked);
         
         if (_backButton != null)
         {
@@ -43,8 +42,6 @@ public class SettingsUI : MonoBehaviour
             
             _musicSlider.value = data.MusicVolume;
             _sfxSlider.value = data.SoundVolume;
-            
-            UpdateVibrationUI(data.Vibration);
         }
     }
 
@@ -56,25 +53,6 @@ public class SettingsUI : MonoBehaviour
     private void OnSFXSliderChanged(float value)
     {
         SettingsManager.Instance.SetSoundVolume(value);
-    }
-
-    private void OnVibrationButtonClicked()
-    {
-        SettingsManager.Instance.ToggleVibration();
-        UpdateVibrationUI(DataManager.Instance.GameData.Vibration);
-        
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySoundButtonClick();
-        }
-    }
-
-    private void UpdateVibrationUI(bool isOn)
-    {
-        if (_vibrationBtnImage != null)
-        {
-            _vibrationBtnImage.sprite = isOn ? _vibrationOnSprite : _vibrationOffSprite;
-        }
     }
 
     private void OnBackButtonClicked()
@@ -91,7 +69,6 @@ public class SettingsUI : MonoBehaviour
     {
         _musicSlider.onValueChanged.RemoveListener(OnMusicSliderChanged);
         _sfxSlider.onValueChanged.RemoveListener(OnSFXSliderChanged);
-        _vibrationButton.onClick.RemoveListener(OnVibrationButtonClicked);
         if (_backButton != null)
         {
             _backButton.onClick.RemoveListener(OnBackButtonClicked);

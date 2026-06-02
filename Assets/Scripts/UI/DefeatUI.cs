@@ -266,6 +266,6 @@ public class DefeatUI : MonoBehaviour
         AudioManager.Instance?.PlaySoundButtonClick();
         Time.timeScale = 1f;
         Hide();
-        GameSceneManager.Instance?.ShowMainMenu();
+        GameSceneManager.Instance?.ShowSelectLevel();
     }
 }

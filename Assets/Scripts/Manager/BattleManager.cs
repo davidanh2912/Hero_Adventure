@@ -15,8 +15,6 @@ public class BattleManager : Singleton<BattleManager>
 
     [Header("Level Progress")]
     [SerializeField] private BackgroundScroller bgScroller;
-    private IGameModeStrategy currentStrategy;
-    public IGameModeStrategy CurrentStrategy => currentStrategy;
 
     [Header("References")]
     [SerializeField] private GameplayUIManager gameplayUIManager;
@@ -90,29 +88,17 @@ public class BattleManager : Singleton<BattleManager>
 
         player.InitStat();
 
-        Debug.Log("Initializing BattleManager with GameMode: " + (GameModeManager.Instance != null ? GameModeManager.Instance.CurrentMode.ToString() : "None"));
+        Debug.Log("Initializing BattleManager with GameModeManager");
 
         if (GameModeManager.Instance != null)
         {
-            if (GameModeManager.Instance.CurrentMode == GameModeType.Level)
-            {
-                Debug.Log("Selected Game Mode: Level");
-                currentStrategy = new LevelModeStrategy();
-            }
-            else
-            {
-                Debug.Log("Selected Game Mode: Endless");
-                currentStrategy = new EndlessModeStrategy();
-            }
+            GameModeManager.Instance.InitializeBattle();
+            StartCoroutine(GameModeManager.Instance.OnWaveCleared(this));
         }
         else
         {
-            currentStrategy = new LevelModeStrategy();
+            Debug.LogError("[BattleManager] GameModeManager instance is null!");
         }
-
-        Debug.Log("Initialized Strategy: " + currentStrategy.GetType().Name);
-        currentStrategy.Initialize(this);
-        StartCoroutine(currentStrategy.OnWaveCleared(this));
     }
 
     public IEnumerator ExploreRoutine()
@@ -154,15 +140,15 @@ public class BattleManager : Singleton<BattleManager>
             if (AudioManager.Instance != null) AudioManager.Instance.PlayMusicBattleNormal();
         }
 
-        List<CharacterInfoSO> enemiesToSpawn = currentStrategy.GetEnemiesToSpawn(listEnemySO);
+        List<CharacterInfoSO> enemiesToSpawn = GameModeManager.Instance != null ? GameModeManager.Instance.GetEnemiesToSpawn(listEnemySO) : new List<CharacterInfoSO>();
 
         if (enemiesToSpawn == null || enemiesToSpawn.Count == 0)
         {
-            Debug.LogWarning("No enemies to spawn from strategy.");
+            Debug.LogWarning("No enemies to spawn from GameModeManager.");
             return;
         }
 
-        float difficultyMultiplier = currentStrategy.GetDifficultyMultiplier();
+        float difficultyMultiplier = GameModeManager.Instance != null ? GameModeManager.Instance.GetDifficultyMultiplier() : 1f;
         Debug.Log($"[BattleManager] Spawning {enemiesToSpawn.Count} enemies with difficulty multiplier: {difficultyMultiplier:F2}");
 
         if (spawnPoints == null || spawnPoints.Length == 0)
@@ -273,7 +259,8 @@ public class BattleManager : Singleton<BattleManager>
         if (activeEnemies.Count == 0)
         {
             if (AudioManager.Instance != null) AudioManager.Instance.PlayWaveClear();
-            StartCoroutine(currentStrategy.OnWaveCleared(this));
+            if (GameModeManager.Instance != null)
+                StartCoroutine(GameModeManager.Instance.OnWaveCleared(this));
             yield break;
         }
 
@@ -308,7 +295,7 @@ public class BattleManager : Singleton<BattleManager>
             }
         }
 
-        if (!currentStrategy.IsGameOver(player))
+        if (GameModeManager.Instance != null && !GameModeManager.Instance.IsGameOver(player))
         {
             StartPlayerTurn();
         }
