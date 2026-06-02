@@ -49,10 +49,7 @@ public class VictoryUI : MonoBehaviour
     [SerializeField] private float gapAfterStars = 0.3f;
     [SerializeField] private float gapAfterRewards = 0.2f;
 
-    [Header("Endless Base Rewards")]
-    [SerializeField] private int baseGoldEndless = 50;
-    [SerializeField] private int baseDiamondEndless = 1;
-    [SerializeField] private int baseExpEndless = 30;
+
 
     private Coroutine _showCoroutine;
 
@@ -170,10 +167,7 @@ public class VictoryUI : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(gapAfterChest);
 
-        bool isLevel = GameModeManager.Instance != null &&
-                       GameModeManager.Instance.CurrentMode == GameModeType.Level;
-
-        if (isLevel && starPrefab != null && starsContainer != null)
+        if (starPrefab != null && starsContainer != null)
         {
             LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
             int starsToShow = CalculateStars(player, cfg);
@@ -220,19 +214,16 @@ public class VictoryUI : MonoBehaviour
 
         if (chestRewardImg != null) chestRewardImg.gameObject.SetActive(false);
 
-        List<int> amounts = rewardOverrides ?? BuildRewardAmounts(isLevel);
+        List<int> amounts = rewardOverrides ?? BuildRewardAmounts();
 
         if (DataManager.Instance != null && amounts.Count >= 3)
         {
             DataManager.Instance.GameData.AddResources(amounts[0], amounts[1], amounts[2]);
 
-            if (isLevel)
+            LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
+            if (cfg != null)
             {
-                LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
-                if (cfg != null)
-                {
-                    DataManager.Instance.GameData.UnlockNextLevel(cfg.LevelID);
-                }
+                DataManager.Instance.GameData.UnlockNextLevel(cfg.LevelID);
             }
 
             DataManager.Instance.GameData.Save();
@@ -293,54 +284,33 @@ public class VictoryUI : MonoBehaviour
         return 1;
     }
 
-    private List<int> BuildRewardAmounts(bool isLevel)
+    private List<int> BuildRewardAmounts()
     {
-        if (isLevel)
+        LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
+        bool alreadyCleared = false;
+        if (cfg != null && DataManager.Instance != null && DataManager.Instance.GameData != null)
         {
-            LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
-            bool alreadyCleared = false;
-            if (cfg != null && DataManager.Instance != null && DataManager.Instance.GameData != null)
-            {
-                alreadyCleared = cfg.LevelID < DataManager.Instance.GameData.MaxUnlockedLevel;
-            }
+            alreadyCleared = cfg.LevelID < DataManager.Instance.GameData.MaxUnlockedLevel;
+        }
 
-            if (alreadyCleared)
+        if (alreadyCleared)
+        {
+            return new List<int>
             {
-                return new List<int>
-                {
-                    Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
-                    Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
-                    Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
-                };
-            }
-            else
-            {
-                return new List<int>
-                {
-                    cfg?.GoldReward    ?? 0,
-                    cfg?.DiamondReward ?? 0,
-                    cfg?.ExpReward     ?? 0
-                };
-            }
+                Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
+                Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
+                Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
+            };
         }
         else
         {
-            int round = GetEndlessCurrentRound();
-            float scale = 1f + (round - 1) * 0.25f;
-
             return new List<int>
             {
-                Mathf.RoundToInt(baseGoldEndless    * scale),
-                Mathf.RoundToInt(baseDiamondEndless * scale),
-                Mathf.RoundToInt(baseExpEndless     * scale)
+                cfg?.GoldReward    ?? 0,
+                cfg?.DiamondReward ?? 0,
+                cfg?.ExpReward     ?? 0
             };
         }
-    }
-
-    private int GetEndlessCurrentRound()
-    {
-        var strategy = BattleManager.Instance?.CurrentStrategy as EndlessModeStrategy;
-        return strategy?.CurrentRound ?? 1;
     }
 
     private static CanvasGroup GetOrAddCanvasGroup(GameObject go)
@@ -356,8 +326,7 @@ public class VictoryUI : MonoBehaviour
         Time.timeScale = 1f;
         Hide();
 
-        bool isLevel = GameModeManager.Instance != null && GameModeManager.Instance.CurrentMode == GameModeType.Level;
-        if (isLevel && GameModeManager.Instance.CurrentLevelConfig != null)
+        if (GameModeManager.Instance != null && GameModeManager.Instance.CurrentLevelConfig != null)
         {
             int nextLevelId = GameModeManager.Instance.CurrentLevelConfig.LevelID + 1;
 

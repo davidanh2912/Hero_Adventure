@@ -127,7 +127,6 @@ public class BattleManager : Singleton<BattleManager>
     private void SpawnEnemies()
     {
         bool isBoss = GameModeManager.Instance != null &&
-                      GameModeManager.Instance.CurrentMode == GameModeType.Level &&
                       GameModeManager.Instance.CurrentLevelConfig != null &&
                       GameModeManager.Instance.CurrentLevelConfig.IsBossLevel;
 

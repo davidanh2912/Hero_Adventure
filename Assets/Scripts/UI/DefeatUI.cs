@@ -49,10 +49,7 @@ public class DefeatUI : MonoBehaviour
     [SerializeField] private float gapAfterSword = 0.3f;
     [SerializeField] private float gapAfterRewards = 0.2f;
 
-    [Header("Endless Base Rewards")]
-    [SerializeField] private int baseGoldEndless = 30;
-    [SerializeField] private int baseDiamondEndless = 0;
-    [SerializeField] private int baseExpEndless = 20;
+
 
     private Coroutine _showCoroutine;
 
@@ -212,38 +209,13 @@ public class DefeatUI : MonoBehaviour
 
     private List<int> BuildRewardAmounts()
     {
-        bool isLevel = GameModeManager.Instance != null &&
-                       GameModeManager.Instance.CurrentMode == GameModeType.Level;
-
-        if (isLevel)
+        LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
+        return new List<int>
         {
-            LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
-            return new List<int>
-            {
-                Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
-                Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
-                Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
-            };
-        }
-        else
-        {
-            int round = GetEndlessCurrentRound();
-
-            float scale = 1f + (round - 1) * 0.25f;
-
-            return new List<int>
-            {
-                Mathf.RoundToInt(baseGoldEndless    * scale),
-                Mathf.RoundToInt(baseDiamondEndless * scale),
-                Mathf.RoundToInt(baseExpEndless     * scale)
-            };
-        }
-    }
-
-    private int GetEndlessCurrentRound()
-    {
-        var strategy = BattleManager.Instance?.CurrentStrategy as EndlessModeStrategy;
-        return strategy?.CurrentRound ?? 1;
+            Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
+            Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
+            Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
+        };
     }
 
     private static CanvasGroup GetOrAddCanvasGroup(GameObject go)
