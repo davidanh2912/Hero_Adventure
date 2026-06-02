@@ -8,24 +8,31 @@ public class BattleManager : Singleton<BattleManager>
     [Header("State")]
     [SerializeField] private GameState currentState;
     public GameState CurrentState => currentState;
+    private GameState previousState;
+
     [SerializeField] private int maxActionPoints = 5;
     [SerializeField] private int currentActionPoints;
 
     [Header("Level Progress")]
-    [SerializeField] private int maxRounds = 3;
-    private int currentRound = 0;
-    private int currentLevelID;
     [SerializeField] private BackgroundScroller bgScroller;
+    private IGameModeStrategy currentStrategy;
+    public IGameModeStrategy CurrentStrategy => currentStrategy;
 
     [Header("References")]
+    [SerializeField] private GameplayUIManager gameplayUIManager;
+    public GameplayUIManager GameplayUIManager => gameplayUIManager;
+    [SerializeField] private GameGrid gameGrid;
     [SerializeField] private Player player;
+    public Player Player => player;
     [SerializeField] private List<Enemy> activeEnemies = new List<Enemy>();
     [SerializeField] private float multiplierPerGem = 0.25f;
+    [SerializeField] private EnemySelectionManager enemySelectionManager;
 
     [Header("Enemy Spawner Settings")]
     [SerializeField] private Enemy enemyPrefab;
     [SerializeField] private List<CharacterInfoSO> listEnemySO;
     [SerializeField] private Transform[] spawnPoints;
+    [SerializeField] private Transform characterParent;
 
     protected override void Awake()
     {
@@ -35,63 +42,96 @@ public class BattleManager : Singleton<BattleManager>
     private void OnEnable()
     {
         ObserverManager<EventID>.AddRegisterEvent(EventID.OnGemsMatched, HandleGemsMatched);
-        ObserverManager<EventID>.AddRegisterEvent(EventID.OnLevelSelected, InitLevel);
-
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnPause, HandlePause);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnResume, HandleResume);
     }
 
     private void OnDisable()
     {
         ObserverManager<EventID>.RemoveAddListener(EventID.OnGemsMatched, HandleGemsMatched);
-        ObserverManager<EventID>.RemoveAddListener(EventID.OnLevelSelected, InitLevel);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnPause, HandlePause);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnResume, HandleResume);
     }
 
-    private void Start()
+    public void InitBattle()
     {
+        CleanupBattle();
+        
+        if (bgScroller != null)
+        {
+            bgScroller.Init();
+        }
+
+        if (gameplayUIManager != null)
+        {
+            gameplayUIManager.Init();
+        }
+        else
+        {
+            gameplayUIManager = FindObjectOfType<GameplayUIManager>();
+            if (gameplayUIManager != null) gameplayUIManager.Init();
+        }
+
+        if (gameGrid != null)
+        {
+            gameGrid.Init();
+        }
+        else
+        {
+            gameGrid = FindObjectOfType<GameGrid>();
+            if (gameGrid != null) gameGrid.Init();
+        }
+
         if (player == null)
         {
             player = FindObjectOfType<Player>();
             if (player == null) return;
         }
-    }
 
-    public void InitLevel(object param)
-    {
-        if (param is LevelDataSO levelData)
+        player.InitStat();
+
+        Debug.Log("Initializing BattleManager with GameMode: " + (GameModeManager.Instance != null ? GameModeManager.Instance.CurrentMode.ToString() : "None"));
+
+        if (GameModeManager.Instance != null)
         {
-            currentLevelID = levelData.LevelID;
-            maxRounds = levelData.MaxRounds;
-            listEnemySO = levelData.enemies;
-
-            player.InitStat();
-            currentRound = 0;
-            StartCoroutine(ExploreRoutine());
+            if (GameModeManager.Instance.CurrentMode == GameModeType.Level)
+            {
+                Debug.Log("Selected Game Mode: Level");
+                currentStrategy = new LevelModeStrategy();
+            }
+            else
+            {
+                Debug.Log("Selected Game Mode: Endless");
+                currentStrategy = new EndlessModeStrategy();
+            }
         }
-    }
-
-    private IEnumerator ExploreRoutine()
-    {
-        if (currentRound >= maxRounds)
+        else
         {
-            currentState = GameState.Finished;
-            // Chiến thắng màn chơi
-            ObserverManager<EventID>.PostEvent(EventID.OnLevelCompleted, currentLevelID);
-            // Có thể cần gửi một event để báo chiến thắng thay vì OnGameOver, 
-            // hiện tại tạm dùng một custom logic hoặc update UI chiến thắng.
-            UIManager.Instance?.ShowVictory();
-            yield break;
+            currentStrategy = new LevelModeStrategy();
         }
 
-        currentRound++;
-        ObserverManager<EventID>.PostEvent(EventID.OnUpdateRoundCount, currentRound);
+        Debug.Log("Initialized Strategy: " + currentStrategy.GetType().Name);
+        currentStrategy.Initialize(this);
+        StartCoroutine(currentStrategy.OnWaveCleared(this));
+    }
+
+    public IEnumerator ExploreRoutine()
+    {
         currentState = GameState.Running;
 
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayMusicExplore();
+
         player.SetRunningAnimation(true);
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayPlayerFootstep(true);
+
         if (bgScroller != null) bgScroller.StartScrolling();
 
         float waitTime = Random.Range(3f, 5f);
         yield return new WaitForSeconds(waitTime);
 
         player.SetRunningAnimation(false);
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayPlayerFootstep(false);
+
         if (bgScroller != null) bgScroller.StopScrolling();
 
         SpawnEnemies();
@@ -100,23 +140,58 @@ public class BattleManager : Singleton<BattleManager>
 
     private void SpawnEnemies()
     {
-        activeEnemies.Clear();
-        int enemyCount = Random.Range(1, spawnPoints.Length + 1);
+        bool isBoss = GameModeManager.Instance != null &&
+                      GameModeManager.Instance.CurrentMode == GameModeType.Level &&
+                      GameModeManager.Instance.CurrentLevelConfig != null &&
+                      GameModeManager.Instance.CurrentLevelConfig.IsBossLevel;
 
-        if (enemyCount == 1)
+        if (isBoss)
         {
-            Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[spawnPoints.Length - 1].position, Quaternion.identity);
-            newEnemy.InitStat(listEnemySO[Random.Range(0, listEnemySO.Count)]);
-            activeEnemies.Add(newEnemy);
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayMusicBattleBoss();
+        }
+        else
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayMusicBattleNormal();
+        }
+
+        List<CharacterInfoSO> enemiesToSpawn = currentStrategy.GetEnemiesToSpawn(listEnemySO);
+
+        if (enemiesToSpawn == null || enemiesToSpawn.Count == 0)
+        {
+            Debug.LogWarning("No enemies to spawn from strategy.");
             return;
         }
 
-        for (int i = 0; i < enemyCount; i++)
+        float difficultyMultiplier = currentStrategy.GetDifficultyMultiplier();
+        Debug.Log($"[BattleManager] Spawning {enemiesToSpawn.Count} enemies with difficulty multiplier: {difficultyMultiplier:F2}");
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
         {
-            Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[i].position, Quaternion.identity);
-            newEnemy.InitStat(listEnemySO[Random.Range(0, listEnemySO.Count)]);
+            Debug.LogError("[BattleManager] spawnPoints chưa được gán!");
+            return;
+        }
+
+        if (enemiesToSpawn.Count == 1)
+        {
+            Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[spawnPoints.Length - 1].position, Quaternion.identity, characterParent);
+            newEnemy.InitStat(enemiesToSpawn[0]);
+            newEnemy.ApplyDifficultyMultiplier(difficultyMultiplier);
             activeEnemies.Add(newEnemy);
         }
+        else
+        {
+            for (int i = 0; i < enemiesToSpawn.Count; i++)
+            {
+                if (i >= spawnPoints.Length) break;
+
+                Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[i].position, Quaternion.identity);
+                newEnemy.InitStat(enemiesToSpawn[i]);
+                newEnemy.ApplyDifficultyMultiplier(difficultyMultiplier);
+                activeEnemies.Add(newEnemy);
+            }
+        }
+
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayRoundStart();
     }
 
     private void StartPlayerTurn()
@@ -124,7 +199,7 @@ public class BattleManager : Singleton<BattleManager>
         currentState = GameState.PlayerTurn;
         currentActionPoints = maxActionPoints;
         ObserverManager<EventID>.PostEvent(EventID.OnPlayerTurnStart);
-        ObserverManager<EventID>.PostEvent(EventID.OnUpdateTurnCount, currentActionPoints);
+        gameplayUIManager?.UpdateTurnCount(currentActionPoints);
     }
 
     private void HandleGemsMatched(object param)
@@ -147,15 +222,33 @@ public class BattleManager : Singleton<BattleManager>
         switch (data.GemType)
         {
             case GemType.Damage:
-                Enemy target = activeEnemies.Find(e => !e.IsDead());
-                if (target != null)
+                currentState = GameState.SelectingTarget;
+
+                Enemy selectedTarget = null;
+
+                if (enemySelectionManager != null)
                 {
-                    ObserverManager<EventID>.PostEvent(EventID.OnShowEnemyInfo, target);
-                    yield return StartCoroutine(player.PerformAttackSequence(target, totalPower, data.MatchCount - 3));
-                    yield return new WaitForSeconds(1f);
-                    ObserverManager<EventID>.PostEvent(EventID.OnHideEnemyInfo);
+                    yield return StartCoroutine(
+                        enemySelectionManager.SelectTarget(activeEnemies, (t) => selectedTarget = t)
+                    );
+                }
+                else
+                {
+                    selectedTarget = activeEnemies.Find(e => !e.IsDead());
+                }
+
+                currentState = GameState.Matching;
+
+                if (selectedTarget != null)
+                {
+                    gameplayUIManager?.ShowEnemyInfo(selectedTarget);
+                    yield return StartCoroutine(player.PerformAttackSequence(selectedTarget, totalPower));
+                    yield return new WaitForSeconds(0.5f);
+                    selectedTarget.HideTargetIndicator();
+                    gameplayUIManager?.HideEnemyInfo();
                 }
                 break;
+
             case GemType.Health:
                 player.Heal(totalPower);
                 break;
@@ -174,12 +267,13 @@ public class BattleManager : Singleton<BattleManager>
         }
 
         currentActionPoints--;
-        ObserverManager<EventID>.PostEvent(EventID.OnUpdateTurnCount, currentActionPoints);
+        gameplayUIManager?.UpdateTurnCount(currentActionPoints);
         activeEnemies.RemoveAll(e => e.IsDead());
 
         if (activeEnemies.Count == 0)
         {
-            StartCoroutine(ExploreRoutine());
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayWaveClear();
+            StartCoroutine(currentStrategy.OnWaveCleared(this));
             yield break;
         }
 
@@ -201,21 +295,76 @@ public class BattleManager : Singleton<BattleManager>
 
         foreach (Enemy enemy in activeEnemies)
         {
+            
+            if (player == null || player.IsDead())
+            {
+                break;
+            }
+
             if (!enemy.IsDead())
             {
-                yield return StartCoroutine(enemy.PerformAttackSequence(player, 1f, 0));
-                yield return new WaitForSeconds(0.2f);
+                yield return StartCoroutine(enemy.PerformAttackSequence(player, 1f));
+                yield return new WaitForSeconds(0.5f); 
             }
         }
 
-        if (!player.IsDead())
+        if (!currentStrategy.IsGameOver(player))
         {
             StartPlayerTurn();
         }
         else
         {
             currentState = GameState.Finished;
-            ObserverManager<EventID>.PostEvent(EventID.OnGameOver);
+            gameplayUIManager?.ShowGameOver(player);
+        }
+    }
+
+    public void SetGameState(GameState state)
+    {
+        currentState = state;
+    }
+
+    private void HandlePause(object param)
+    {
+        if (currentState != GameState.Paused)
+        {
+            previousState = currentState;
+            currentState = GameState.Paused;
+        }
+    }
+
+    private void HandleResume(object param)
+    {
+        if (currentState == GameState.Paused)
+        {
+            currentState = previousState;
+        }
+    }
+
+    public void CleanupBattle()
+    {
+        StopAllCoroutines();
+
+        if (characterParent != null)
+        {
+            foreach (Transform child in characterParent)
+            {
+                if (child.gameObject.activeInHierarchy && child.GetComponent<Enemy>() != null)
+                {
+                    PoolingManager.Despawn(child.gameObject);
+                }
+            }
+        }
+        activeEnemies.Clear();
+
+        if (gameGrid != null)
+        {
+            gameGrid.ClearGrid();
+        }
+
+        if (player != null)
+        {
+            player.StopAllCoroutines();
         }
     }
 }

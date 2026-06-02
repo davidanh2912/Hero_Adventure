@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -61,8 +61,8 @@ public class AudioManager : Singleton<AudioManager>
 
     private void Start()
     {
-        SetMusicVolume(DataManager.Instance.GameData.VolumeMusic);
-        SetSoundVolume(DataManager.Instance.GameData.VolumeSFX);
+        SetMusicVolume(DataManager.Instance.GameData.MusicVolume);
+        SetSoundVolume(DataManager.Instance.GameData.SoundVolume);
         PlayMusicIntro();
     }
 
@@ -73,7 +73,7 @@ public class AudioManager : Singleton<AudioManager>
             _musicSource.volume = volume;
             if (DataManager.Instance != null && DataManager.Instance.GameData != null)
             {
-                DataManager.Instance.GameData.VolumeMusic = volume;
+                DataManager.Instance.GameData.MusicVolume = volume;
             }
         }
     }
@@ -85,7 +85,7 @@ public class AudioManager : Singleton<AudioManager>
             _soundSource.volume = volume;
             if (DataManager.Instance != null && DataManager.Instance.GameData != null)
             {
-                DataManager.Instance.GameData.VolumeSFX = volume;
+                DataManager.Instance.GameData.SoundVolume = volume;
             }
         }
     }
@@ -126,12 +126,12 @@ public class AudioManager : Singleton<AudioManager>
         {
             if (_musicSource != null && _musicSource.clip == _musicBattleNormal)
             {
-                _musicSource.DOFade(DataManager.Instance.GameData.VolumeMusic * 0.5f, 0.5f).SetUpdate(true);
+                _musicSource.DOFade(DataManager.Instance.GameData.MusicVolume * 0.5f, 0.5f).SetUpdate(true);
             }
             else
             {
                 PlayMusicGame(_musicBattleNormal);
-                if (_musicSource != null) _musicSource.volume = DataManager.Instance.GameData.VolumeMusic * 0.5f;
+                if (_musicSource != null) _musicSource.volume = DataManager.Instance.GameData.MusicVolume * 0.5f;
             }
         }
     }
@@ -142,17 +142,17 @@ public class AudioManager : Singleton<AudioManager>
 
         if (_musicSource.isPlaying && _musicSource.clip == clip)
         {
-            if (fullVolume) _musicSource.DOFade(DataManager.Instance.GameData.VolumeMusic, 0.5f).SetUpdate(true);
+            if (fullVolume) _musicSource.DOFade(DataManager.Instance.GameData.MusicVolume, 0.5f).SetUpdate(true);
             return;
         }
 
-        _musicSource.DOKill();
+        _musicSource.DOKill(); 
 
         _musicSource.loop = true;
         _musicSource.clip = clip;
         _musicSource.volume = 0f;
         _musicSource.Play();
-        float targetVolume = fullVolume ? DataManager.Instance.GameData.VolumeMusic : DataManager.Instance.GameData.VolumeMusic * 0.5f;
+        float targetVolume = fullVolume ? DataManager.Instance.GameData.MusicVolume : DataManager.Instance.GameData.MusicVolume * 0.5f;
         _musicSource.DOFade(targetVolume, 0.5f).SetUpdate(true);
     }
 
@@ -195,7 +195,7 @@ public class AudioManager : Singleton<AudioManager>
         _soundSource.pitch = Random.Range(minPitch, maxPitch);
         _soundSource.PlayOneShot(sound, _soundSource.volume);
     }
-
+    
     private void ResetPitch()
     {
         if (_soundSource != null) _soundSource.pitch = 1f;
@@ -222,14 +222,15 @@ public class AudioManager : Singleton<AudioManager>
 
     public void PlayGemSelect() => PlaySFX(_gemSelect);
     public void PlayGemDrag() => PlaySFXWithPitch(_gemDrag, 0.9f, 1.1f);
-
-    public void PlayGemMatch(int matchCount)
+    
+    public void PlayGemMatch(int matchCount) 
     {
         float pitch = Mathf.Clamp(1.0f + (matchCount - 3) * 0.1f, 1.0f, 1.5f);
         if (_soundSource != null)
         {
             _soundSource.pitch = pitch;
             _soundSource.PlayOneShot(_gemMatchBase, _soundSource.volume);
+            ResetPitch();
         }
     }
 
@@ -238,7 +239,7 @@ public class AudioManager : Singleton<AudioManager>
         if (play) PlaySFX(_playerFootstep, true);
         else StopSFX();
     }
-
+    
     public void PlayAttackSwing() => PlaySFXWithPitch(_attackSwing);
     public void PlayAttackCritSwing() => PlaySFXWithPitch(_attackCritSwing);
     public void PlayAttackHit() => PlaySFXWithPitch(_attackHit);

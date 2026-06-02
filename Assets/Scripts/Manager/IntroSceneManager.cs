@@ -38,6 +38,7 @@ public class IntroSceneManager : MonoBehaviour
         quitButton.transform.localScale = Vector3.zero;
 
         playButton.onClick.AddListener(OnPlayClicked);
+        settingButton.onClick.AddListener(OnSettingsClicked);
         quitButton.onClick.AddListener(OnQuitClicked);
 
         DOVirtual.DelayedCall(1f, () =>
@@ -48,7 +49,7 @@ public class IntroSceneManager : MonoBehaviour
 
     private IEnumerator LoadSceneAsync()
     {
-        asyncLoadOperation = SceneManager.LoadSceneAsync(1);
+        asyncLoadOperation = SceneManager.LoadSceneAsync(GameConstants.Scenes.MainScene);
 
         asyncLoadOperation.allowSceneActivation = false;
 
@@ -61,7 +62,7 @@ public class IntroSceneManager : MonoBehaviour
 
             if (asyncLoadOperation.progress >= 0.9f)
             {
-                yield return new WaitForSeconds(2f);
+                yield return new WaitForSeconds(1f);
                 ShowButtonsPanel();
                 break;
             }
@@ -95,6 +96,11 @@ public class IntroSceneManager : MonoBehaviour
         {
             asyncLoadOperation.allowSceneActivation = true;
         }
+    }
+
+    public void OnSettingsClicked()
+    {
+        SettingsManager.Instance.OpenSettings();
     }
 
     private void OnQuitClicked()
