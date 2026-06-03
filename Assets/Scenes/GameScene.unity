@@ -6195,9 +6195,6 @@ MonoBehaviour:
   gapAfterTitle: 0.2
   gapAfterSword: 0.3
   gapAfterRewards: 0.2
-  baseGoldEndless: 30
-  baseDiamondEndless: 0
-  baseExpEndless: 20
 --- !u!1 &1536184443
 GameObject:
   m_ObjectHideFlags: 0
@@ -6555,11 +6552,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 497cc2e8dd4b5c94c928193d8ffcd276, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  topBarLevelText: {fileID: 0}
-  topBarExpFill: {fileID: 0}
-  topBarExpText: {fileID: 0}
-  topBarGoldText: {fileID: 0}
-  topBarDiamondText: {fileID: 0}
   selectLevelPanel: {fileID: 308628798}
   gameplayPanel: {fileID: 738449651}
   backButton: {fileID: 2024443723}
@@ -7096,9 +7088,6 @@ MonoBehaviour:
   gapAfterChest: 0.3
   gapAfterStars: 0.3
   gapAfterRewards: 0.2
-  baseGoldEndless: 50
-  baseDiamondEndless: 1
-  baseExpEndless: 30
 --- !u!1 &1778889343
 GameObject:
   m_ObjectHideFlags: 0
@@ -7396,7 +7385,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1822388723}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4994d83acd2a5a34cbb8268f7438bb40, type: 3}
+  m_Script: {fileID: 11500000, guid: 109aee0f671498345ae5230d50bdd108, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   hpText: {fileID: 1994013382}
@@ -7418,11 +7407,10 @@ MonoBehaviour:
   enemyHpText: {fileID: 467678558}
   damagePopupObj: {fileID: 1494598727}
   damagePopupText: {fileID: 1494598729}
-  pausePopupObj: {fileID: 0}
-  victoryPanelObj: {fileID: 0}
-  gameOverPanelObj: {fileID: 0}
-  gameplayObj: {fileID: 0}
-  selectLevelObj: {fileID: 0}
+  pausePopup: {fileID: 1270894613}
+  pauseButton: {fileID: 445486379}
+  victoryUI: {fileID: 1771488982}
+  defeatUI: {fileID: 1521910694}
 --- !u!1 &1860387371 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 615253868415871948, guid: 59f35def821ef724193833155b509cae, type: 3}
@@ -8399,12 +8387,12 @@ MonoBehaviour:
   maxActionPoints: 5
   currentActionPoints: 0
   bgScroller: {fileID: 2102540455}
-  gameplayUIManager: {fileID: 0}
-  gameGrid: {fileID: 0}
+  gameplayUIManager: {fileID: 1822388728}
+  gameGrid: {fileID: 22158564}
   player: {fileID: 722920002}
   activeEnemies: []
   multiplierPerGem: 0.25
-  enemySelectionManager: {fileID: 0}
+  enemySelectionManager: {fileID: 2025170504}
   enemyPrefab: {fileID: 4840756094578868637, guid: c063c18f8852b2143a0b31a297aee12d, type: 3}
   listEnemySO:
   - {fileID: 11400000, guid: 3678d96dfa1858f45916931e654f01f7, type: 2}
@@ -8414,7 +8402,7 @@ MonoBehaviour:
   - {fileID: 1609386778}
   - {fileID: 1083390619}
   - {fileID: 485185281}
-  characterParent: {fileID: 0}
+  characterParent: {fileID: 500948703}
 --- !u!114 &2025170504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8429,7 +8417,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 256
 --- !u!1001 &2037597724
 PrefabInstance:
   m_ObjectHideFlags: 0

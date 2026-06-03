@@ -6,13 +6,6 @@ using TMPro;
 
 public class GameSceneManager : Singleton<GameSceneManager>
 {
-    [Header("Top Bar UI")]
-    [SerializeField] private TextMeshProUGUI topBarLevelText;
-    [SerializeField] private Image topBarExpFill;
-    [SerializeField] private TextMeshProUGUI topBarExpText;
-    [SerializeField] private TextMeshProUGUI topBarGoldText;
-    [SerializeField] private TextMeshProUGUI topBarDiamondText;
-
     [Header("Panels")]
     [SerializeField] private GameObject selectLevelPanel;
     [SerializeField] private GameObject gameplayPanel;
@@ -51,30 +44,12 @@ public class GameSceneManager : Singleton<GameSceneManager>
     {
         BattleManager.Instance?.CleanupBattle();
         AudioManager.Instance?.PlayMusicInMenu();
-        UpdateTopBar();
         if (selectLevelPanel) selectLevelPanel.SetActive(true);
         if (gameplayPanel) gameplayPanel.SetActive(false);
         UpdateLevelNodes();
     }
-
-    /// <summary>Alias kept for VictoryUI / DefeatUI that call ShowMainMenu() to return to level select.</summary>
     public void ShowMainMenu() => ShowSelectLevel();
 
-    private void UpdateTopBar()
-    {
-        if (DataManager.Instance == null) return;
-
-        var data = DataManager.Instance.GameData;
-
-        if (topBarLevelText != null) topBarLevelText.text = $"{data.PlayerLevel}";
-
-        int maxExp = data.PlayerLevel * 100;
-        if (topBarExpText != null) topBarExpText.text = $"{data.CurrentExp}/{maxExp}";
-        if (topBarExpFill != null) topBarExpFill.fillAmount = (float)data.CurrentExp / maxExp;
-
-        if (topBarGoldText != null) topBarGoldText.text = data.Gold.ToString();
-        if (topBarDiamondText != null) topBarDiamondText.text = data.Diamond.ToString();
-    }
 
     private void UpdateLevelNodes()
     {

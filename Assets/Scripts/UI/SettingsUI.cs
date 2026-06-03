@@ -12,9 +12,6 @@ public class SettingsUI : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button _vibrationButton;
     [SerializeField] private Button _backButton;
-    [SerializeField] private Image _vibrationBtnImage;
-    [SerializeField] private Sprite _vibrationOnSprite;
-    [SerializeField] private Sprite _vibrationOffSprite;
 
     public void Init()
     {
