@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
@@ -15,10 +15,30 @@ public class GameGrid : MonoBehaviour
     public Gem[,] gridGems { get; private set; }
     private float startX;
 
-    private void Start()
+    public void Init()
     {
+        ClearGrid();
         startX = -(gridSize - 1) * spacing / 2f;
         CreateGrid();
+    }
+
+    public void ClearGrid()
+    {
+        if (gridGems != null)
+        {
+            for (int x = 0; x < gridSize; x++)
+            {
+                for (int y = 0; y < gridSize; y++)
+                {
+                    if (gridGems[x, y] != null)
+                    {
+                        gridGems[x, y].transform.DOKill();
+                        gemSpawner.DespawnGem(gridGems[x, y]);
+                        gridGems[x, y] = null;
+                    }
+                }
+            }
+        }
     }
 
     private void CreateGrid()
@@ -76,6 +96,7 @@ public class GameGrid : MonoBehaviour
         });
 
         Debug.Log($"Matched {matchCount} gems of type {type} with power {power}");
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayGemMatch(matchCount);
 
         foreach (Gem gem in matchedGems)
         {
@@ -83,7 +104,11 @@ public class GameGrid : MonoBehaviour
             gridGems[gem.gridPosition.x, gem.gridPosition.y] = null;
 
             gem.transform.DOKill();
-            gemSpawner.DespawnGem(gem);
+            Gem capturedGem = gem;
+            capturedGem.transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack).OnComplete(() =>
+            {
+                gemSpawner.DespawnGem(capturedGem);
+            });
         }
 
         foreach (int x in affectedColumns)
