@@ -12,6 +12,13 @@ public class BattleManager : Singleton<BattleManager>
 
     [SerializeField] private int maxActionPoints = 5;
     [SerializeField] private int currentActionPoints;
+    public int CurrentActionPoints => currentActionPoints;
+
+    [Header("Skill Charge Settings")]
+    [SerializeField] private int maxSkillCharge = 5;
+    [SerializeField] private int currentSkillCharge = 0;
+    public int MaxSkillCharge => maxSkillCharge;
+    public int CurrentSkillCharge => currentSkillCharge;
 
     [Header("Level Progress")]
     [SerializeField] private BackgroundScroller bgScroller;
@@ -87,6 +94,7 @@ public class BattleManager : Singleton<BattleManager>
         }
 
         player.InitStat();
+        currentSkillCharge = 0;
 
         Debug.Log("Initializing BattleManager with GameModeManager");
 
@@ -252,6 +260,7 @@ public class BattleManager : Singleton<BattleManager>
         }
 
         currentActionPoints--;
+        AddSkillCharge(1);
         gameplayUIManager?.UpdateTurnCount(currentActionPoints);
         activeEnemies.RemoveAll(e => e.IsDead());
 
@@ -267,6 +276,81 @@ public class BattleManager : Singleton<BattleManager>
         {
             StartCoroutine(EnemyTurnRoutine());
             yield break;
+        }
+
+        currentState = GameState.PlayerTurn;
+    }
+
+    public void AddSkillCharge(int amount)
+    {
+        currentSkillCharge = Mathf.Clamp(currentSkillCharge + amount, 0, maxSkillCharge);
+    }
+
+    public void UseSkill(GameObject skillPrefab, float damageMultiplier, int apCost)
+    {
+        if (currentState != GameState.PlayerTurn || player.IsDead() || currentActionPoints < apCost) return;
+        StartCoroutine(UseSkillRoutine(skillPrefab, damageMultiplier, apCost));
+    }
+
+    private IEnumerator UseSkillRoutine(GameObject skillPrefab, float damageMultiplier, int apCost)
+    {
+        currentState = GameState.SelectingTarget;
+
+        Enemy selectedTarget = null;
+
+        if (enemySelectionManager != null)
+        {
+            yield return StartCoroutine(
+                enemySelectionManager.SelectTarget(activeEnemies, (t) => selectedTarget = t)
+            );
+        }
+        else
+        {
+            selectedTarget = activeEnemies.Find(e => !e.IsDead());
+        }
+
+        currentState = GameState.Matching; // Lock board and interaction during skill cast
+
+        if (selectedTarget != null)
+        {
+            gameplayUIManager?.ShowEnemyInfo(selectedTarget);
+            
+            // Spawn skill prefab at enemy's position
+            GameObject skillInstance = Instantiate(skillPrefab, selectedTarget.transform.position, Quaternion.identity);
+            ISkillEffect skillEffect = skillInstance.GetComponent<ISkillEffect>();
+            if (skillEffect != null)
+            {
+                yield return StartCoroutine(skillEffect.Execute(player, selectedTarget, damageMultiplier));
+            }
+            else
+            {
+                // Fallback: deal damage immediately if no skill effect script is attached
+                float rawDamage = player.CalculateDamage(out bool isCrit) * damageMultiplier;
+                selectedTarget.TakeDamage(rawDamage, isCrit);
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            selectedTarget.HideTargetIndicator();
+            gameplayUIManager?.HideEnemyInfo();
+
+            currentActionPoints -= apCost;
+            currentSkillCharge = 0; // Reset charge on successful cast
+            gameplayUIManager?.UpdateTurnCount(currentActionPoints);
+            activeEnemies.RemoveAll(e => e.IsDead());
+
+            if (activeEnemies.Count == 0)
+            {
+                if (AudioManager.Instance != null) AudioManager.Instance.PlayWaveClear();
+                if (GameModeManager.Instance != null)
+                    StartCoroutine(GameModeManager.Instance.OnWaveCleared(this));
+                yield break;
+            }
+
+            if (currentActionPoints <= 0 && !player.IsDead())
+            {
+                StartCoroutine(EnemyTurnRoutine());
+                yield break;
+            }
         }
 
         currentState = GameState.PlayerTurn;
