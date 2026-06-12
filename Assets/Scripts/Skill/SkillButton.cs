@@ -13,6 +13,12 @@ public class SkillButton : MonoBehaviour
     [Tooltip("Số điểm hành động (Action Points) tiêu hao tại lượt cast (mặc định bằng 0 vì đã tích đủ 5 điểm)")]
     [SerializeField] private int apCost = 0;
 
+    [Header("Individual Charge Settings")]
+    [Tooltip("Sử dụng cơ chế tích điểm riêng cho kỹ năng này thay vì dùng chung hệ thống tích điểm toàn cục")]
+    [SerializeField] private bool useIndividualCharge = false;
+    [Tooltip("Số lượng lượt Action Points cần tích lũy để sử dụng kỹ năng")]
+    [SerializeField] private int requiredCharge = 15;
+
     [Header("UI Fill Settings")]
     [Tooltip("Image hiển thị dạng Fill (Cần set Image Type thành Filled)")]
     [SerializeField] private Image fillImage;
@@ -24,28 +30,63 @@ public class SkillButton : MonoBehaviour
     [SerializeField] private TMP_Text chargeText;
 
     private Button _button;
+    private int _currentCharge;
 
     private void Awake()
     {
         _button = GetComponent<Button>();
     }
 
+    private void Start()
+    {
+        // Khởi tạo điểm tích lũy ban đầu đạt tối đa để có thể sử dụng ngay
+        _currentCharge = requiredCharge;
+    }
+
     private void OnEnable()
     {
         _button.onClick.AddListener(OnSkillButtonClicked);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnBattleInit, HandleBattleInit);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnSkillUsed, HandleSkillUsed);
+        ObserverManager<EventID>.AddRegisterEvent(EventID.OnGemsMatched, HandleGemsMatched);
     }
 
     private void OnDisable()
     {
         _button.onClick.RemoveListener(OnSkillButtonClicked);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnBattleInit, HandleBattleInit);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnSkillUsed, HandleSkillUsed);
+        ObserverManager<EventID>.RemoveAddListener(EventID.OnGemsMatched, HandleGemsMatched);
+    }
+
+    private void HandleBattleInit(object param)
+    {
+        // Khi bắt đầu màn mới hoặc trận đấu mới, cho phép dùng ngay lập tức
+        _currentCharge = requiredCharge;
+    }
+
+    private void HandleGemsMatched(object param)
+    {
+        if (useIndividualCharge && _currentCharge < requiredCharge)
+        {
+            _currentCharge++;
+        }
+    }
+
+    private void HandleSkillUsed(object param)
+    {
+        if (useIndividualCharge && param is GameObject usedPrefab && usedPrefab == skillPrefab)
+        {
+            _currentCharge = 0;
+        }
     }
 
     private void Update()
     {
         if (BattleManager.Instance != null)
         {
-            int currentCharge = BattleManager.Instance.CurrentSkillCharge;
-            int maxCharge = BattleManager.Instance.MaxSkillCharge;
+            int currentCharge = useIndividualCharge ? _currentCharge : BattleManager.Instance.CurrentSkillCharge;
+            int maxCharge = useIndividualCharge ? requiredCharge : BattleManager.Instance.MaxSkillCharge;
 
             if (fillImage != null && maxCharge > 0)
             {

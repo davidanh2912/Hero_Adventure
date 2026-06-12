@@ -17,12 +17,16 @@ public class SwordSkillEffect : MonoBehaviour, ISkillEffect
     [SerializeField] private bool useAnimation = false;
     [Tooltip("Tên trigger để kích hoạt animation (để trống nếu tự động chạy default state)")]
     [SerializeField] private string animationTrigger = "";
+    [Tooltip("Khoảng cách Y offset khi sử dụng Animator")]
+    [SerializeField] private float animationYOffset = 2f;
     [Tooltip("Thời gian chờ trước khi gây sát thương kể từ lúc xuất hiện (giây)")]
     [SerializeField] private float damageDelay = 0.5f;
     [Tooltip("Tổng thời gian tồn tại của skill trước khi hủy (giây)")]
     [SerializeField] private float destroyDelay = 1.0f;
 
     private SpriteRenderer _spriteRenderer;
+
+    public bool NeedsTargetSelection => true;
 
     private void Awake()
     {
@@ -39,8 +43,8 @@ public class SwordSkillEffect : MonoBehaviour, ISkillEffect
 
         if (useAnimation)
         {
-            // Đặt vị trí tại tâm của enemy
-            transform.position = target.transform.position;
+            // Đặt vị trí tại tâm của enemy cộng thêm Y offset
+            transform.position = target.transform.position + Vector3.up * animationYOffset;
             transform.rotation = Quaternion.identity;
 
             Animator animator = GetComponent<Animator>();

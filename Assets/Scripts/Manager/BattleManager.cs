@@ -30,6 +30,7 @@ public class BattleManager : Singleton<BattleManager>
     [SerializeField] private Player player;
     public Player Player => player;
     [SerializeField] private List<Enemy> activeEnemies = new List<Enemy>();
+    public List<Enemy> ActiveEnemies => activeEnemies;
     [SerializeField] private float multiplierPerGem = 0.25f;
     [SerializeField] private EnemySelectionManager enemySelectionManager;
 
@@ -95,6 +96,7 @@ public class BattleManager : Singleton<BattleManager>
 
         player.InitStat();
         currentSkillCharge = 0;
+        ObserverManager<EventID>.PostEvent(EventID.OnBattleInit);
 
         Debug.Log("Initializing BattleManager with GameModeManager");
 
@@ -294,15 +296,31 @@ public class BattleManager : Singleton<BattleManager>
 
     private IEnumerator UseSkillRoutine(GameObject skillPrefab, float damageMultiplier, int apCost)
     {
-        currentState = GameState.SelectingTarget;
+        ISkillEffect skillEffect = skillPrefab.GetComponent<ISkillEffect>();
+        bool needsTarget = skillEffect != null ? skillEffect.NeedsTargetSelection : true;
 
         Enemy selectedTarget = null;
 
-        if (enemySelectionManager != null)
+        if (needsTarget)
         {
-            yield return StartCoroutine(
-                enemySelectionManager.SelectTarget(activeEnemies, (t) => selectedTarget = t)
-            );
+            currentState = GameState.SelectingTarget;
+
+            if (enemySelectionManager != null)
+            {
+                yield return StartCoroutine(
+                    enemySelectionManager.SelectTarget(activeEnemies, (t) => selectedTarget = t)
+                );
+            }
+            else
+            {
+                selectedTarget = activeEnemies.Find(e => !e.IsDead());
+            }
+
+            if (selectedTarget == null)
+            {
+                currentState = GameState.PlayerTurn;
+                yield break;
+            }
         }
         else
         {
@@ -311,30 +329,40 @@ public class BattleManager : Singleton<BattleManager>
 
         currentState = GameState.Matching; // Lock board and interaction during skill cast
 
-        if (selectedTarget != null)
+        if (selectedTarget != null || !needsTarget)
         {
-            gameplayUIManager?.ShowEnemyInfo(selectedTarget);
-            
-            // Spawn skill prefab at enemy's position
-            GameObject skillInstance = Instantiate(skillPrefab, selectedTarget.transform.position, Quaternion.identity);
-            ISkillEffect skillEffect = skillInstance.GetComponent<ISkillEffect>();
-            if (skillEffect != null)
+            if (selectedTarget != null)
             {
-                yield return StartCoroutine(skillEffect.Execute(player, selectedTarget, damageMultiplier));
+                gameplayUIManager?.ShowEnemyInfo(selectedTarget);
+            }
+            
+            Vector3 spawnPos = selectedTarget != null ? selectedTarget.transform.position : Vector3.zero;
+            GameObject skillInstance = Instantiate(skillPrefab, spawnPos, Quaternion.identity);
+            ISkillEffect instanceEffect = skillInstance.GetComponent<ISkillEffect>();
+            if (instanceEffect != null)
+            {
+                yield return StartCoroutine(instanceEffect.Execute(player, selectedTarget, damageMultiplier));
             }
             else
             {
                 // Fallback: deal damage immediately if no skill effect script is attached
-                float rawDamage = player.CalculateDamage(out bool isCrit) * damageMultiplier;
-                selectedTarget.TakeDamage(rawDamage, isCrit);
+                if (selectedTarget != null)
+                {
+                    float rawDamage = player.CalculateDamage(out bool isCrit) * damageMultiplier;
+                    selectedTarget.TakeDamage(rawDamage, isCrit);
+                }
                 yield return new WaitForSeconds(0.5f);
             }
 
-            selectedTarget.HideTargetIndicator();
+            if (selectedTarget != null)
+            {
+                selectedTarget.HideTargetIndicator();
+            }
             gameplayUIManager?.HideEnemyInfo();
 
             currentActionPoints -= apCost;
             currentSkillCharge = 0; // Reset charge on successful cast
+            ObserverManager<EventID>.PostEvent(EventID.OnSkillUsed, skillPrefab);
             gameplayUIManager?.UpdateTurnCount(currentActionPoints);
             activeEnemies.RemoveAll(e => e.IsDead());
 
