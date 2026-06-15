@@ -12,6 +12,13 @@ public class BattleManager : Singleton<BattleManager>
 
     [SerializeField] private int maxActionPoints = 5;
     [SerializeField] private int currentActionPoints;
+    public int CurrentActionPoints => currentActionPoints;
+
+    [Header("Skill Charge Settings")]
+    [SerializeField] private int maxSkillCharge = 5;
+    [SerializeField] private int currentSkillCharge = 0;
+    public int MaxSkillCharge => maxSkillCharge;
+    public int CurrentSkillCharge => currentSkillCharge;
 
     [Header("Level Progress")]
     [SerializeField] private BackgroundScroller bgScroller;
@@ -23,6 +30,7 @@ public class BattleManager : Singleton<BattleManager>
     [SerializeField] private Player player;
     public Player Player => player;
     [SerializeField] private List<Enemy> activeEnemies = new List<Enemy>();
+    public List<Enemy> ActiveEnemies => activeEnemies;
     [SerializeField] private float multiplierPerGem = 0.25f;
     [SerializeField] private EnemySelectionManager enemySelectionManager;
 
@@ -87,6 +95,8 @@ public class BattleManager : Singleton<BattleManager>
         }
 
         player.InitStat();
+        currentSkillCharge = 0;
+        ObserverManager<EventID>.PostEvent(EventID.OnBattleInit);
 
         Debug.Log("Initializing BattleManager with GameModeManager");
 
@@ -252,6 +262,7 @@ public class BattleManager : Singleton<BattleManager>
         }
 
         currentActionPoints--;
+        AddSkillCharge(1);
         gameplayUIManager?.UpdateTurnCount(currentActionPoints);
         activeEnemies.RemoveAll(e => e.IsDead());
 
@@ -267,6 +278,107 @@ public class BattleManager : Singleton<BattleManager>
         {
             StartCoroutine(EnemyTurnRoutine());
             yield break;
+        }
+
+        currentState = GameState.PlayerTurn;
+    }
+
+    public void AddSkillCharge(int amount)
+    {
+        currentSkillCharge = Mathf.Clamp(currentSkillCharge + amount, 0, maxSkillCharge);
+    }
+
+    public void UseSkill(GameObject skillPrefab, float damageMultiplier, int apCost)
+    {
+        if (currentState != GameState.PlayerTurn || player.IsDead() || currentActionPoints < apCost) return;
+        StartCoroutine(UseSkillRoutine(skillPrefab, damageMultiplier, apCost));
+    }
+
+    private IEnumerator UseSkillRoutine(GameObject skillPrefab, float damageMultiplier, int apCost)
+    {
+        ISkillEffect skillEffect = skillPrefab.GetComponent<ISkillEffect>();
+        bool needsTarget = skillEffect != null ? skillEffect.NeedsTargetSelection : true;
+
+        Enemy selectedTarget = null;
+
+        if (needsTarget)
+        {
+            currentState = GameState.SelectingTarget;
+
+            if (enemySelectionManager != null)
+            {
+                yield return StartCoroutine(
+                    enemySelectionManager.SelectTarget(activeEnemies, (t) => selectedTarget = t)
+                );
+            }
+            else
+            {
+                selectedTarget = activeEnemies.Find(e => !e.IsDead());
+            }
+
+            if (selectedTarget == null)
+            {
+                currentState = GameState.PlayerTurn;
+                yield break;
+            }
+        }
+        else
+        {
+            selectedTarget = activeEnemies.Find(e => !e.IsDead());
+        }
+
+        currentState = GameState.Matching; // Lock board and interaction during skill cast
+
+        if (selectedTarget != null || !needsTarget)
+        {
+            if (selectedTarget != null)
+            {
+                gameplayUIManager?.ShowEnemyInfo(selectedTarget);
+            }
+            
+            Vector3 spawnPos = selectedTarget != null ? selectedTarget.transform.position : Vector3.zero;
+            GameObject skillInstance = Instantiate(skillPrefab, spawnPos, Quaternion.identity);
+            ISkillEffect instanceEffect = skillInstance.GetComponent<ISkillEffect>();
+            if (instanceEffect != null)
+            {
+                yield return StartCoroutine(instanceEffect.Execute(player, selectedTarget, damageMultiplier));
+            }
+            else
+            {
+                // Fallback: deal damage immediately if no skill effect script is attached
+                if (selectedTarget != null)
+                {
+                    float rawDamage = player.CalculateDamage(out bool isCrit) * damageMultiplier;
+                    selectedTarget.TakeDamage(rawDamage, isCrit);
+                }
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            if (selectedTarget != null)
+            {
+                selectedTarget.HideTargetIndicator();
+            }
+            gameplayUIManager?.HideEnemyInfo();
+
+            currentActionPoints -= apCost;
+            currentSkillCharge = 0; // Reset charge on successful cast
+            ObserverManager<EventID>.PostEvent(EventID.OnSkillUsed, skillPrefab);
+            gameplayUIManager?.UpdateTurnCount(currentActionPoints);
+            activeEnemies.RemoveAll(e => e.IsDead());
+
+            if (activeEnemies.Count == 0)
+            {
+                if (AudioManager.Instance != null) AudioManager.Instance.PlayWaveClear();
+                if (GameModeManager.Instance != null)
+                    StartCoroutine(GameModeManager.Instance.OnWaveCleared(this));
+                yield break;
+            }
+
+            if (currentActionPoints <= 0 && !player.IsDead())
+            {
+                StartCoroutine(EnemyTurnRoutine());
+                yield break;
+            }
         }
 
         currentState = GameState.PlayerTurn;

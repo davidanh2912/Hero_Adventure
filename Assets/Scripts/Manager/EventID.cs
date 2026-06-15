@@ -12,7 +12,9 @@ public enum EventID
     OnPause,
     OnResume,
     OnEnemyTargetSelectionRequired,
-    OnEnemyTargetSelected
+    OnEnemyTargetSelected,
+    OnBattleInit,
+    OnSkillUsed
 }
 
 public class MatchEventData
