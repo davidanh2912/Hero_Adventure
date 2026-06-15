@@ -6,6 +6,11 @@ public class Enemy : BaseCharacter
     [Header("Target Indicator")]
     [SerializeField] private SpriteRenderer targetIndicator;
 
+    private void OnEnable()
+    {
+        HideTargetIndicator();
+    }
+
     public override void BroadcastUIUpdate()
     {
         BattleManager.Instance.GameplayUIManager.RefreshEnemyHP(this);

@@ -27,7 +27,7 @@ public class SkillButton : MonoBehaviour
 
     [Header("UI Text Settings")]
     [Tooltip("Text hiển thị số lượng lượt tích lũy còn lại")]
-    [SerializeField] private TMP_Text chargeText;
+    [SerializeField] private TextMeshProUGUI chargeText;
 
     private Button _button;
     private int _currentCharge;
@@ -37,10 +37,14 @@ public class SkillButton : MonoBehaviour
         _button = GetComponent<Button>();
     }
 
+    private int _lastCharge = -1;
+    private int _lastMaxCharge = -1;
+    private bool _lastInteractable = false;
+
     private void Start()
     {
-        // Khởi tạo điểm tích lũy ban đầu đạt tối đa để có thể sử dụng ngay
-        _currentCharge = requiredCharge;
+        // Khởi tạo điểm tích lũy ban đầu là 0 để không thể sử dụng ngay
+        _currentCharge = 0;
     }
 
     private void OnEnable()
@@ -61,8 +65,8 @@ public class SkillButton : MonoBehaviour
 
     private void HandleBattleInit(object param)
     {
-        // Khi bắt đầu màn mới hoặc trận đấu mới, cho phép dùng ngay lập tức
-        _currentCharge = requiredCharge;
+        // Khi bắt đầu màn mới hoặc trận đấu mới, reset điểm về 0
+        _currentCharge = 0;
     }
 
     private void HandleGemsMatched(object param)
@@ -88,16 +92,22 @@ public class SkillButton : MonoBehaviour
             int currentCharge = useIndividualCharge ? _currentCharge : BattleManager.Instance.CurrentSkillCharge;
             int maxCharge = useIndividualCharge ? requiredCharge : BattleManager.Instance.MaxSkillCharge;
 
-            if (fillImage != null && maxCharge > 0)
+            if (currentCharge != _lastCharge || maxCharge != _lastMaxCharge)
             {
-                float ratio = (float)currentCharge / maxCharge;
-                fillImage.fillAmount = fillToCharge ? ratio : (1f - ratio);
-            }
+                _lastCharge = currentCharge;
+                _lastMaxCharge = maxCharge;
 
-            if (chargeText != null && maxCharge > 0)
-            {
-                int remaining = Mathf.Max(0, maxCharge - currentCharge);
-                chargeText.text = remaining > 0 ? remaining.ToString() : "READY";
+                if (fillImage != null && maxCharge > 0)
+                {
+                    float ratio = (float)currentCharge / maxCharge;
+                    fillImage.fillAmount = fillToCharge ? ratio : (1f - ratio);
+                }
+
+                if (chargeText != null && maxCharge > 0)
+                {
+                    int remaining = Mathf.Max(0, maxCharge - currentCharge);
+                    chargeText.text = remaining > 0 ? remaining.ToString() : "READY";
+                }
             }
 
             bool canUse = BattleManager.Instance.CurrentState == GameState.PlayerTurn &&
@@ -106,11 +116,17 @@ public class SkillButton : MonoBehaviour
                           currentCharge >= maxCharge &&
                           BattleManager.Instance.CurrentActionPoints >= apCost;
 
-            _button.interactable = canUse;
+            if (_button.interactable != canUse)
+            {
+                _button.interactable = canUse;
+            }
         }
         else
         {
-            _button.interactable = false;
+            if (_button.interactable)
+            {
+                _button.interactable = false;
+            }
         }
     }
 

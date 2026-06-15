@@ -67,7 +67,6 @@ public class FireBallMassiveEffect : MonoBehaviour, ISkillEffect
             yield break;
         }
 
-        // --- 1. Giai đoạn tụ chiêu (Cast) ---
         Vector3 startPosition = caster.transform.position + new Vector3(spawnXOffset, spawnYOffset, 0f);
         transform.position = startPosition;
         transform.rotation = Quaternion.identity;
@@ -82,13 +81,11 @@ public class FireBallMassiveEffect : MonoBehaviour, ISkillEffect
             yield return new WaitForSeconds(castDuration);
         }
 
-        // --- 2. Giai đoạn bay (Flight) ---
         if (_animator != null && !string.IsNullOrEmpty(flightStateName))
         {
             _animator.Play(flightStateName);
         }
 
-        // Đích đến: X ở giữa đám quái và Y của player + targetYOffset
         float targetX = target != null ? target.transform.position.x : 0f;
         float targetZ = target != null ? target.transform.position.z : 0f;
 
@@ -120,7 +117,6 @@ public class FireBallMassiveEffect : MonoBehaviour, ISkillEffect
 
         yield return new WaitUntil(() => hasArrived);
 
-        // --- 3. Giai đoạn chạm đất/nổ (Hit) ---
         if (_animator != null && !string.IsNullOrEmpty(hitStateName))
         {
             _animator.Play(hitStateName);
