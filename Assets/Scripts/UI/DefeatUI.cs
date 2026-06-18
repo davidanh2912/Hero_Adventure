@@ -17,12 +17,6 @@ public class DefeatUI : MonoBehaviour
 
     [Tooltip("Image thanh gươm gãy.")]
     [SerializeField] private Transform swordBrokenImg;
-
-    [Header("Rewards")]
-    [Tooltip("Prefab của RewardItem để khởi tạo động.")]
-    [SerializeField] private RewardItem rewardPrefab;
-    [Tooltip("Container chứa các RewardItem.")]
-    [SerializeField] private Transform rewardContainer;
     
     [Header("Reward Sprites")]
     [SerializeField] private Sprite goldSprite;
@@ -43,13 +37,9 @@ public class DefeatUI : MonoBehaviour
     [SerializeField] private float popupScaleDuration = 0.45f;
     [SerializeField] private float defeatImgDuration = 0.5f;
     [SerializeField] private float swordImgDuration = 0.4f;
-    [SerializeField] private float rewardStagger = 0.25f;
     [SerializeField] private float buttonStagger = 0.15f;
     [SerializeField] private float gapAfterTitle = 0.2f;
     [SerializeField] private float gapAfterSword = 0.3f;
-    [SerializeField] private float gapAfterRewards = 0.2f;
-
-
 
     private Coroutine _showCoroutine;
 
@@ -68,7 +58,11 @@ public class DefeatUI : MonoBehaviour
 
     public void Show(List<int> rewardOverrides = null)
     {
-        if (AudioManager.Instance != null) AudioManager.Instance.PlaySoundLose();
+        if (AudioManager.Instance != null) 
+        {
+            AudioManager.Instance.StopMusic();
+            AudioManager.Instance.PlaySoundLose();
+        }
         dime.gameObject.SetActive(true);
         PrepareInitialState();
 
@@ -94,14 +88,6 @@ public class DefeatUI : MonoBehaviour
         if (defeatImg != null) { defeatImg.alpha = 0f; defeatImg.gameObject.SetActive(false); }
 
         if (swordBrokenImg != null) { swordBrokenImg.localScale = Vector3.zero; swordBrokenImg.gameObject.SetActive(false); }
-
-        if (rewardContainer != null)
-        {
-            foreach (Transform child in rewardContainer)
-            {
-                Destroy(child.gameObject);
-            }
-        }
 
         if (buttons != null)
         {
@@ -155,36 +141,6 @@ public class DefeatUI : MonoBehaviour
         }
 
         yield return new WaitForSecondsRealtime(gapAfterSword);
-        
-        if (swordBrokenImg != null) swordBrokenImg.gameObject.SetActive(false);
-
-        List<int> amounts = rewardOverrides ?? BuildRewardAmounts();
-        
-        if (DataManager.Instance != null && amounts.Count >= 3)
-        {
-            DataManager.Instance.GameData.AddResources(amounts[0], amounts[1], amounts[2]);
-            DataManager.Instance.GameData.Save();
-        }
-
-        if (rewardPrefab != null && rewardContainer != null && amounts != null)
-        {
-            Sprite[] sprites = { goldSprite, diamondSprite, expSprite };
-
-            for (int i = 0; i < amounts.Count; i++)
-            {
-                int amount = amounts[i];
-                if (amount <= 0) continue;
-
-                RewardItem newReward = Instantiate(rewardPrefab, rewardContainer);
-                Sprite icon = (i < sprites.Length) ? sprites[i] : null;
-                newReward.Init(icon, amount);
-                newReward.PlayShowAnimation(0.35f);
-
-                yield return new WaitForSecondsRealtime(rewardStagger);
-            }
-        }
-
-        yield return new WaitForSecondsRealtime(gapAfterRewards);
 
         if (buttons != null)
         {
@@ -205,17 +161,6 @@ public class DefeatUI : MonoBehaviour
                 yield return new WaitForSecondsRealtime(buttonStagger);
             }
         }
-    }
-
-    private List<int> BuildRewardAmounts()
-    {
-        LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
-        return new List<int>
-        {
-            Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
-            Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
-            Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
-        };
     }
 
     private static CanvasGroup GetOrAddCanvasGroup(GameObject go)
