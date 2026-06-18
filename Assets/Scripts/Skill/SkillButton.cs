@@ -39,11 +39,9 @@ public class SkillButton : MonoBehaviour
 
     private int _lastCharge = -1;
     private int _lastMaxCharge = -1;
-    private bool _lastInteractable = false;
 
     private void Start()
     {
-        // Khởi tạo điểm tích lũy ban đầu là 0 để không thể sử dụng ngay
         _currentCharge = 0;
     }
 

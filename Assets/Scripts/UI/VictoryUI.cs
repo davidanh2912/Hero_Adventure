@@ -21,10 +21,6 @@ public class VictoryUI : MonoBehaviour
     private List<StarUI> spawnedStars = new List<StarUI>();
     [SerializeField] private Transform chestRewardImg;
 
-    [Header("Rewards")]
-    [SerializeField] private RewardItem rewardPrefab;
-    [SerializeField] private Transform rewardContainer;
-
     [Header("Reward Sprites")]
     [SerializeField] private Sprite goldSprite;
     [SerializeField] private Sprite diamondSprite;
@@ -42,12 +38,10 @@ public class VictoryUI : MonoBehaviour
     [SerializeField] private float victoryImgDuration = 0.5f;
     [SerializeField] private float chestImgDuration = 0.4f;
     [SerializeField] private float starStagger = 0.2f;
-    [SerializeField] private float rewardStagger = 0.25f;
     [SerializeField] private float buttonStagger = 0.15f;
     [SerializeField] private float gapAfterTitle = 0.2f;
     [SerializeField] private float gapAfterChest = 0.3f;
     [SerializeField] private float gapAfterStars = 0.3f;
-    [SerializeField] private float gapAfterRewards = 0.2f;
 
 
 
@@ -67,7 +61,11 @@ public class VictoryUI : MonoBehaviour
 
     public void Show(Player player = null, List<int> rewardOverrides = null)
     {
-        if (AudioManager.Instance != null) AudioManager.Instance.PlaySoundWin();
+        if (AudioManager.Instance != null) 
+        {
+            AudioManager.Instance.StopMusic();
+            AudioManager.Instance.PlaySoundWin();
+        }
         dime.gameObject.SetActive(true);
         PrepareInitialState();
 
@@ -102,17 +100,6 @@ public class VictoryUI : MonoBehaviour
             }
         }
         spawnedStars.Clear();
-
-        if (rewardContainer != null)
-        {
-            foreach (Transform child in rewardContainer)
-            {
-                if (child.GetComponent<RewardItem>() != null)
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-        }
 
         if (buttons != null)
         {
@@ -212,14 +199,8 @@ public class VictoryUI : MonoBehaviour
             yield return new WaitForSecondsRealtime(gapAfterStars);
         }
 
-        if (chestRewardImg != null) chestRewardImg.gameObject.SetActive(false);
-
-        List<int> amounts = rewardOverrides ?? BuildRewardAmounts();
-
-        if (DataManager.Instance != null && amounts.Count >= 3)
+        if (DataManager.Instance != null)
         {
-            DataManager.Instance.GameData.AddResources(amounts[0], amounts[1], amounts[2]);
-
             LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
             if (cfg != null)
             {
@@ -228,26 +209,6 @@ public class VictoryUI : MonoBehaviour
 
             DataManager.Instance.GameData.Save();
         }
-
-        if (rewardPrefab != null && rewardContainer != null && amounts != null)
-        {
-            Sprite[] sprites = { goldSprite, diamondSprite, expSprite };
-
-            for (int i = 0; i < amounts.Count; i++)
-            {
-                int amount = amounts[i];
-                if (amount <= 0) continue;
-
-                RewardItem newReward = Instantiate(rewardPrefab, rewardContainer);
-                Sprite icon = (i < sprites.Length) ? sprites[i] : null;
-                newReward.Init(icon, amount);
-                newReward.PlayShowAnimation(0.35f);
-
-                yield return new WaitForSecondsRealtime(rewardStagger);
-            }
-        }
-
-        yield return new WaitForSecondsRealtime(gapAfterRewards);
 
         if (buttons != null)
         {
@@ -282,35 +243,6 @@ public class VictoryUI : MonoBehaviour
         if (hpPercent + 0.01f >= threeStarThresh) return 3;
         if (hpPercent + 0.01f >= twoStarThresh) return 2;
         return 1;
-    }
-
-    private List<int> BuildRewardAmounts()
-    {
-        LevelConfig cfg = GameModeManager.Instance?.CurrentLevelConfig;
-        bool alreadyCleared = false;
-        if (cfg != null && DataManager.Instance != null && DataManager.Instance.GameData != null)
-        {
-            alreadyCleared = cfg.LevelID < DataManager.Instance.GameData.MaxUnlockedLevel;
-        }
-
-        if (alreadyCleared)
-        {
-            return new List<int>
-            {
-                Mathf.RoundToInt((cfg?.GoldReward ?? 0) / 10f),
-                Mathf.RoundToInt((cfg?.DiamondReward ?? 0) / 10f),
-                Mathf.RoundToInt((cfg?.ExpReward ?? 0) / 10f)
-            };
-        }
-        else
-        {
-            return new List<int>
-            {
-                cfg?.GoldReward    ?? 0,
-                cfg?.DiamondReward ?? 0,
-                cfg?.ExpReward     ?? 0
-            };
-        }
     }
 
     private static CanvasGroup GetOrAddCanvasGroup(GameObject go)

@@ -179,7 +179,7 @@ public class BattleManager : Singleton<BattleManager>
             {
                 if (i >= spawnPoints.Length) break;
 
-                Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[i].position, Quaternion.identity);
+                Enemy newEnemy = PoolingManager.Spawn(enemyPrefab, spawnPoints[i].position, Quaternion.identity, characterParent);
                 newEnemy.InitStat(enemiesToSpawn[i]);
                 newEnemy.ApplyDifficultyMultiplier(difficultyMultiplier);
                 activeEnemies.Add(newEnemy);
@@ -327,7 +327,7 @@ public class BattleManager : Singleton<BattleManager>
             selectedTarget = activeEnemies.Find(e => !e.IsDead());
         }
 
-        currentState = GameState.Matching; // Lock board and interaction during skill cast
+        currentState = GameState.Matching;
 
         if (selectedTarget != null || !needsTarget)
         {
@@ -345,7 +345,6 @@ public class BattleManager : Singleton<BattleManager>
             }
             else
             {
-                // Fallback: deal damage immediately if no skill effect script is attached
                 if (selectedTarget != null)
                 {
                     float rawDamage = player.CalculateDamage(out bool isCrit) * damageMultiplier;
@@ -361,7 +360,7 @@ public class BattleManager : Singleton<BattleManager>
             gameplayUIManager?.HideEnemyInfo();
 
             currentActionPoints -= apCost;
-            currentSkillCharge = 0; // Reset charge on successful cast
+            currentSkillCharge = 0;
             ObserverManager<EventID>.PostEvent(EventID.OnSkillUsed, skillPrefab);
             gameplayUIManager?.UpdateTurnCount(currentActionPoints);
             activeEnemies.RemoveAll(e => e.IsDead());
@@ -442,6 +441,14 @@ public class BattleManager : Singleton<BattleManager>
     public void CleanupBattle()
     {
         StopAllCoroutines();
+
+        foreach (var enemy in activeEnemies)
+        {
+            if (enemy != null && enemy.gameObject != null)
+            {
+                PoolingManager.Despawn(enemy.gameObject);
+            }
+        }
 
         if (characterParent != null)
         {

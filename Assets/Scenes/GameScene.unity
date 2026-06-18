@@ -826,7 +826,6 @@ RectTransform:
   - {fileID: 691672447}
   - {fileID: 1566923028}
   - {fileID: 1632205726}
-  - {fileID: 1259482904}
   - {fileID: 1146966862}
   m_Father: {fileID: 1521910693}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2272,7 +2271,6 @@ RectTransform:
   - {fileID: 1215614902}
   - {fileID: 2091989774}
   - {fileID: 1781197927}
-  - {fileID: 670040027}
   - {fileID: 1808992211}
   - {fileID: 821445218}
   m_Father: {fileID: 1771488981}
@@ -2630,68 +2628,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minWidth: 6
---- !u!1 &670040026
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 670040027}
-  - component: {fileID: 670040028}
-  m_Layer: 5
-  m_Name: Rewards
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &670040027
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 670040026}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 570322591}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: -400, y: 140}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &670040028
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 670040026}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 20
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!1 &691672446
 GameObject:
   m_ObjectHideFlags: 0
@@ -4761,68 +4697,6 @@ Canvas:
   m_SortingLayerID: 1686829977
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!1 &1259482903
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1259482904}
-  - component: {fileID: 1259482905}
-  m_Layer: 5
-  m_Name: Rewards
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1259482904
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1259482903}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 122940464}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -400, y: 140}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1259482905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1259482903}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 20
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!1 &1270894611
 GameObject:
   m_ObjectHideFlags: 0
@@ -6182,8 +6056,6 @@ MonoBehaviour:
   dime: {fileID: 770505421}
   defeatImg: {fileID: 1566923031}
   swordBrokenImg: {fileID: 1632205726}
-  rewardPrefab: {fileID: 377480635174346111, guid: be84519fda6fde445abb7a3e8ce5bd60, type: 3}
-  rewardContainer: {fileID: 1259482904}
   goldSprite: {fileID: -2124171016, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
   diamondSprite: {fileID: -1923008590, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
   expSprite: {fileID: 1455809456, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
@@ -7073,8 +6945,6 @@ MonoBehaviour:
   starPrefab: {fileID: 4806465055532586443, guid: 3e5ff67a74bbf6b4fac330de7f388f60, type: 3}
   starsContainer: {fileID: 1808992211}
   chestRewardImg: {fileID: 1781197927}
-  rewardPrefab: {fileID: 377480635174346111, guid: be84519fda6fde445abb7a3e8ce5bd60, type: 3}
-  rewardContainer: {fileID: 670040027}
   goldSprite: {fileID: -2124171016, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
   diamondSprite: {fileID: -1923008590, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
   expSprite: {fileID: 1455809456, guid: d0d4220b0751b4145bc99427d44d6057, type: 3}
